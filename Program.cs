@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using MediaDevices;
@@ -25,15 +26,15 @@ namespace mtpcopy
         static long WriteSreamToDisk(string filePath, MemoryStream memoryStream, bool mkTree=true)
         {
             long wroteBytes = 0;
-            var dirName = System.IO.Path.GetDirectoryName(filePath);
-            if (!System.IO.Directory.Exists(dirName) && mkTree)
-                System.IO.Directory.CreateDirectory(dirName);
-            using (FileStream file = new FileStream(filePath, FileMode.Create, System.IO.FileAccess.Write))
+            var dirName = Path.GetDirectoryName(filePath);
+            if (!Directory.Exists(dirName) && mkTree)
+                Directory.CreateDirectory(dirName);
+            using (FileStream file = new FileStream(filePath, FileMode.Create, FileAccess.Write))
             {
                 byte[] bytes = new byte[memoryStream.Length];
                 memoryStream.Read(bytes, 0, (int)memoryStream.Length);
                 file.Write(bytes, 0, bytes.Length);
-                var fileInfo = new System.IO.FileInfo(filePath);
+                var fileInfo = new FileInfo(filePath);
                 if (fileInfo.Exists && fileInfo.Length == memoryStream.Length)
                     wroteBytes = fileInfo.Length;
                 memoryStream.Close();
@@ -76,6 +77,7 @@ namespace mtpcopy
             }
             var devices = MediaDevice.GetDevices();
             Console.WriteLine($@"Found {devices.Count()} MTP devices");
+            List<string> errorFiles = new List<string>();
             using (var device = devices.First(d => d.FriendlyName == deviceName))
             {
                 device.Connect();
@@ -88,26 +90,42 @@ namespace mtpcopy
                     Console.WriteLine($@"Found {files.Count()} matching filter {searchFilter} on device");                    
                     foreach (var f in files)
                     {
-                        var outputPath = System.IO.Path.GetFullPath($@"{outputDirectory}/{dcimDirectory}/{subDir.Name}/{f.Name}");
-                        bool fileExists = System.IO.File.Exists(outputPath);
+                        var outputPath = Path.GetFullPath($@"{outputDirectory}/{dcimDirectory}/{subDir.Name}/{f.Name}");
+                        bool fileExists = File.Exists(outputPath);
                         if (fileExists && !overwriteExisting)
                         {
                             Console.WriteLine($@"File already exists: {outputPath}");
                         }
                         else if (!fileExists || (fileExists && overwriteExisting))
                         {
-                            MemoryStream memoryStream = new System.IO.MemoryStream();
-                            device.DownloadFile(f.FullName, memoryStream);
-                            memoryStream.Position = 0;
-                            long wroteBytes = WriteSreamToDisk(outputPath, memoryStream);
-                            if (wroteBytes == 0)
-                                Console.WriteLine($@"Error writing {outputPath} to disk!");
-                            else
-                                Console.WriteLine($@"Wrote file {outputPath} ({wroteBytes} bytes) to disk");
+                            MemoryStream memoryStream = new MemoryStream();
+                            try
+                            {
+                                device.DownloadFile(f.FullName, memoryStream);
+                                memoryStream.Position = 0;
+                                long wroteBytes = WriteSreamToDisk(outputPath, memoryStream);
+                                if (wroteBytes == 0)
+                                    Console.WriteLine($@"Error writing {outputPath} to disk!");
+                                else
+                                    Console.WriteLine($@"Wrote file {outputPath} ({wroteBytes} bytes) to disk");
+                            }
+                            catch (Exception e)
+                            {
+                                Console.WriteLine($@"Handled exception: {e.Message}");
+                                errorFiles.Add(f.FullName);
+                            }
                         }
                     }
                 }
                 device.Disconnect();
+            }
+            if (errorFiles.Count > 0)
+            {
+                Console.WriteLine("Handled exception when attempting to download the following files from the MTP device:");
+                foreach(var errorFile in errorFiles)
+                {
+                    Console.WriteLine(errorFile);
+                }
             }
         }
     }
