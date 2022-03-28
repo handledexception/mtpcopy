@@ -12,7 +12,7 @@
             "program": "${workspaceFolder}/bin/Debug/net5.0/mtpcopy.dll",
             "args": [
                 "-d", "Apple iPhone",
-                "-m", "Internal Storage\\DCIM",
+                "-m", "Internal Storage/DCIM",
                 "-o", "D:/Photos/iPhone",
                 "-s", "*.jpg|*.mov|*.mp4"
             ],

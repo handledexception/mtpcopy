@@ -40,6 +40,21 @@ namespace mtpcopy
             }
             return wroteBytes;
         }
+        static void PrintUsage()
+        {
+            string [] usageLines = {
+                "mtpcopy usage:\n",
+                "dotnet run <args 1..N>\n",
+                "Arguments",
+                "---------",
+                "[ -d, --device ] Specify the friendly name of the MTP device (i.e. \"Apple iPhone\")",
+                "[ -m, --dcim ] Specify the path of the DCIM directory on the MTP device (i.e. \"Internal Storage\\\\DCIM\")",
+                "[ -o, --output ] Specify the local output path to copy files from the MTP device (i.e. \"C:\\\\iPhone\")",
+                "[ -s, --search ] Specify the search filter when enumerating files on the MTP device (i.e. \"*.mov|*.jpg)\"",
+            };
+            foreach (var l in usageLines)
+                Console.WriteLine(l);
+        }
         static void Main(string[] args)
         {
             string deviceName = "";
@@ -56,7 +71,7 @@ namespace mtpcopy
             }
             if (deviceName.Length == 0 || dcimDirectory.Length == 0 || outputDirectory.Length == 0)
             {
-                Console.WriteLine("Must specify args for device name (-d), DCIM directory (-m) and output directory (-o)!");
+                PrintUsage();
                 return;
             }
             var devices = MediaDevice.GetDevices();
