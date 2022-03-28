@@ -84,8 +84,6 @@ namespace mtpcopy
                 var subDirs = dcimDir.EnumerateDirectories();
                 foreach (var subDir in subDirs)
                 {
-                    if (subDir.FullName.Contains("202010__"))
-                        continue;
                     var files = subDir.EnumerateFiles(searchFilter);
                     Console.WriteLine($@"Found {files.Count()} matching filter {searchFilter} on device");                    
                     foreach (var f in files)
